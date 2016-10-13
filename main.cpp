@@ -36,15 +36,74 @@ class solution {
   public:
     int lengthLongestPath(const string & input) {
         pNode head = deserialize(input);
-        head->print();
-        return 0;
+        // head->print();
+	vector<vector<pNode>> paths = getPaths(head);
+	for (auto & path : paths) {
+	  for (auto & node : path) {
+	    std::cout << node->str << " ";
+	  }
+	  std::cout << std::endl;
+	}
+
+	size_t idx = 0;
+	for (size_t i = idx+1; i < paths.size(); ++i)
+	  if (paths[i].size() > paths[idx].size())
+	    idx = i;
+
+	int len = 0;
+	for (size_t i = 0; i < paths[idx].size(); ++i) {
+	  len += paths[idx][i]->str.size();
+	  if (i != paths[idx].size()-1)
+	    std::cout << paths[idx][i]->str << "/";
+	  else
+	    std::cout << paths[idx][i]->str << std::endl;
+	}
+	len += paths[idx].size()-1;
+	
+        
+	return len;
     }
 
   private:
+  vector<vector<pNode>> getPaths(const pNode & root) {
+    vector<vector<pNode>> paths;
+    if (root->children.empty())
+      paths.push_back(vector<pNode>{root});
+    else {
+      for (auto & n : root->children) {
+	auto temp = getPaths(n);
+	for (auto tmp : temp) {
+	  tmp.insert(tmp.begin(), root);
+	  paths.push_back(tmp);
+	}
+      }
+    }
+    return paths;
+  }
+
+  int depth(const pNode & root) {
+    int dep;
+    if (root == nullptr)
+      dep = 0;
+    else {
+      vector<int> cands;
+      if (!root->children.empty()) {
+	for (auto & node : root->children)
+	  cands.push_back(depth(node));
+	dep = *std::max_element(cands.begin(), cands.end());
+	dep += 1;
+      }
+      else
+	dep = 1;
+    }
+    return dep;
+  }
+
+
     pNode deserialize(const string & serTree) {
         auto vec = split(serTree);
         // std::for_each(vec.begin(), vec.end(), [](const auto & s){std::cout << s.first << " ";});
-        // std::cout << std::endl;        
+        // std::cout << std::endl;
         pNode node = nullptr;
         if (!vec.empty()) {
             int tabs = leadingTabs(vec.front().first);
@@ -55,7 +114,6 @@ class solution {
             vector<size_t> idx;
             for (size_t i = 1; i < vec.size(); ++i)
                 if (leadingTabs(vec[i].first) == tabs+1) {
-                    // std::cout << i << std::endl;
                     idx.push_back(i);
                 }
             if (!idx.empty()) {
